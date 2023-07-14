@@ -108,3 +108,44 @@ class Facebook:
         
         with open(f"{self.output}.txt", "w", encoding="utf-8") as f:
             f.write(await page.content())
+
+
+if __name__ == "__main__":
+    import os
+    import re
+    import pandas as pd
+    from dotenv import load_dotenv
+    load_dotenv('.env')
+
+    ACCOUNT = os.getenv("FB_ACCOUNT")
+    PASSWORD = os.getenv("FB_PASSWORD")
+    OUTPUT_FB  = "fb_out"
+
+    fb = Facebook(account=ACCOUNT, password=PASSWORD, output=OUTPUT_FB)
+    asyncio.get_event_loop().run_until_complete(fb.get())
+
+
+    with open(f"{OUTPUT_FB}.txt", "r", encoding="utf-8") as f:
+        soup = BeautifulSoup(f.read(), "html.parser")
+
+    all_text = ""
+    for i in soup.find_all("div", {"dir": "auto", "style": "text-align: start;"}):
+        all_text += f"{i.text}\n"
+
+    output_dict = {}
+
+    regex_content = r"#靠北銀行員\d{0,10}([\s\S]*?)(?=#靠北銀行員\d{5})"
+    regex_hashtag = r"#靠北銀行員\d{0,10}"
+
+    contents = re.finditer(regex_content, all_text, re.MULTILINE)
+
+    for content in contents:
+
+        title = re.findall(regex_hashtag, content.group())
+        content = content.group()
+        for ht in title:
+            content = content.replace(ht, "")
+
+        output_dict["&".join(title)] = content
+
+    pd.DataFrame([output_dict]).T.to_excel(f"{OUTPUT_FB}.xlsx")
