@@ -1,3 +1,4 @@
+from .fb import Facebook
 #
 #                       _oo0oo_
 #                      o8888888o
