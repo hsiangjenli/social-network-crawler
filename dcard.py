@@ -114,25 +114,34 @@ class Dcard:
             except:
                 pass
 
-    async def get(self):
-        async with async_playwright() as playwright:
-            await self.go_to_dcard(playwright)
 
-            for article in self.article_data.values():
-                yield article
+    def get(self):
 
-        # # pd.DataFrame(self.article_data.values()).to_csv(f"{self.output}.csv", index=False)
-        # pd.DataFrame(self.article_data.values()).to_excel(f"{self.output}.xlsx", index=False, columns=["id", "date", "url", "title", "content", "comments"])
-        # await browser.close()
+        async def main():
+            async with async_playwright() as playwright:
+                await self.go_to_dcard(playwright)
+        
+        asyncio.run(main())
+
+        for article in self.article_data.values():
+            yield article
 
 
 if __name__ == "__main__":
 
     dcard = Dcard("no required", "no required",
                   "creditcard", "dcard-creditcard")
+    
+    output = []
 
-    async def main():
-        async with async_playwright() as playwright:
-            await dcard.get(playwright)
+    for article in dcard.get():
+        print(article)
+        output.append(article)
+    
+    pd.DataFrame(output).to_excel(f"test.xlsx", index=False, columns=["id", "date", "url", "title", "content", "comments"])
 
-    asyncio.run(main())
+    # async def main():
+    #     async with async_playwright() as playwright:
+    #         await dcard.get(playwright)
+
+    # asyncio.run(main())
