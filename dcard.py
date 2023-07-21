@@ -10,8 +10,9 @@ import time
 import json
 import re
 
+
 class Dcard:
-    
+
     def __init__(self, account: str, password: str, board: str, output: str) -> None:
         self.account = account
         self.password = password
@@ -19,30 +20,27 @@ class Dcard:
         self.output = output
         self.article_data = {}
 
-
     @staticmethod
     def post_href(board: str, id: str) -> str:
         return f"https://www.dcard.tw/f/{board}/p/{id}"
-    
-    
+
     @staticmethod
     async def get_raw_page(page):
         return BeautifulSoup(await page.content(), "html.parser")
 
-
     def get_article_urls(self, soup: str) -> list:
         article_urls = []
-        
-        raw_board_page_data = soup.find_all("script", attrs={"id": "__NEXT_DATA__"})
+
+        raw_board_page_data = soup.find_all(
+            "script", attrs={"id": "__NEXT_DATA__"})
         raw_board_page_data = json.loads(raw_board_page_data[0].text)
 
         data = raw_board_page_data['props']['initialState']['post']['data']
 
         for id, content in data.items():
             article_urls.append(Dcard.post_href(self.board, id))
-        
+
         return article_urls
-    
 
     async def extract_data(self, response):
         output = {}
@@ -60,16 +58,16 @@ class Dcard:
                     comments = [d['content'] for d in data['items']]
                 elif isinstance(data, list):
                     comments = [d['content'] for d in data]
-                
+
                 output['comments'] = comments
-                output['date'] = datetime.strptime(data['items'][-1]['updatedAt'], '%Y-%m-%dT%H:%M:%S.%fZ')
+                output['date'] = datetime.strptime(
+                    data['items'][-1]['updatedAt'], '%Y-%m-%dT%H:%M:%S.%fZ')
             except:
                 pass
 
             self.article_data[id] = output
 
-    
-    async def get(self, playwright) -> str:
+    async def go_to_dcard(self, playwright):
         firefox = playwright.firefox
         browser = await firefox.launch(headless=False)
         page = await browser.new_page()
@@ -87,7 +85,7 @@ class Dcard:
 
         # [Board] 進入目標頁面
         await page.goto(f"https://www.dcard.tw/f/{self.board}?latest=true")
-        
+
         # [Board] 滾動頁面
         for _ in range(10):
             await page.evaluate('_ => {window.scrollBy(0, 3000);}')
@@ -96,34 +94,45 @@ class Dcard:
         article_urls = self.get_article_urls(await Dcard.get_raw_page(page))
 
         for url in article_urls:
-            id = re.findall(r"\d{5,20}", url)[0]
-            page.on('response', self.extract_data)
-            await page.goto(url)
-            raw_article_content = await Dcard.get_raw_page(page)
-            title = raw_article_content.find_all("h1")[0].text
-            content = ""
-            for c in raw_article_content.find_all("span"):
-                content += c.text
-            
-            if id not in self.article_data:
-                self.article_data[id] = {}
-            
-            self.article_data[id].update(
-                {"id": id, "content": content, "title": title, "url": url}
-            )
-            time.sleep(1)
+            try:
+                id = re.findall(r"\d{5,20}", url)[0]
+                page.on('response', self.extract_data)
+                await page.goto(url)
+                raw_article_content = await Dcard.get_raw_page(page)
+                title = raw_article_content.find_all("h1")[0].text
+                content = ""
+                for c in raw_article_content.find_all("span"):
+                    content += c.text
 
-        # pd.DataFrame(self.article_data.values()).to_csv(f"{self.output}.csv", index=False)
-        pd.DataFrame(self.article_data.values()).to_excel(f"{self.output}.xlsx", index=False, columns=["id", "date", "url", "title", "content", "comments"])
-        await browser.close()
+                if id not in self.article_data:
+                    self.article_data[id] = {}
+
+                self.article_data[id].update(
+                    {"id": id, "content": content, "title": title, "url": url}
+                )
+                time.sleep(1)
+            except:
+                pass
+
+    async def get(self):
+        async with async_playwright() as playwright:
+            await self.go_to_dcard(playwright)
+
+            for article in self.article_data.values():
+                yield article
+
+        # # pd.DataFrame(self.article_data.values()).to_csv(f"{self.output}.csv", index=False)
+        # pd.DataFrame(self.article_data.values()).to_excel(f"{self.output}.xlsx", index=False, columns=["id", "date", "url", "title", "content", "comments"])
+        # await browser.close()
 
 
 if __name__ == "__main__":
 
-    dcard = Dcard("no required", "no required", "financial", "dcard")
+    dcard = Dcard("no required", "no required",
+                  "creditcard", "dcard-creditcard")
 
     async def main():
         async with async_playwright() as playwright:
             await dcard.get(playwright)
-    
+
     asyncio.run(main())
