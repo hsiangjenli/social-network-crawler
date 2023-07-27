@@ -1,4 +1,5 @@
 import asyncio
+import time
 from pyppeteer import launch
 from bs4 import BeautifulSoup
 
@@ -195,16 +196,18 @@ class Facebook:
         await page.waitForNavigation()
 
         # Scroll down to load more posts
-        for _ in range(10):
-            await page.evaluate('_ => {window.scrollBy(0, 1000);}')
-            await page.waitFor(1000)
-
+        for _ in range(20):
+            try:
+                await page.evaluate('_ => {window.scrollBy(0, 1000);}')
+                await page.waitFor(1000)
+                # time.sleep(1)
+            except:
+                pass
+            # Click "See more" button
+            incomplete_soup = BeautifulSoup(await page.content(), "html.parser")
+            see_more_class = self.get_see_more_class(incomplete_soup)
+            await page.evaluate(JSTemplate.press_button_by_class(see_more_class))
         # Get page content
-        incomplete_soup = BeautifulSoup(await page.content(), "html.parser")
-
-        # Click "See more" button
-        see_more_class = self.get_see_more_class(incomplete_soup)
-        await page.evaluate(JSTemplate.press_button_by_class(see_more_class))
 
         # Use BeautifulSoup to parse page content
         complete_soup = BeautifulSoup(await page.content(), "html.parser")
@@ -264,11 +267,12 @@ if __name__ == "__main__":
     import re
     import pandas as pd
     from dotenv import load_dotenv
+
     load_dotenv('.env')
 
     ACCOUNT = os.getenv("FB_ACCOUNT")
     PASSWORD = os.getenv("FB_PASSWORD")
-    OUTPUT_FB = "fb_out"
+    OUTPUT_FB = "fb_out_6"
 
     fb = Facebook(
         account=ACCOUNT, 

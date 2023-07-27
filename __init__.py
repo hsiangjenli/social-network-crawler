@@ -1,4 +1,7 @@
 from .fb import Facebook
+from .ptt import PTT
+from .dcard import Dcard
+
 #
 #                       _oo0oo_
 #                      o8888888o

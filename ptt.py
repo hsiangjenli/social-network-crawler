@@ -109,6 +109,7 @@ class PTT:
             "title": title.replace(f"[{category}]", "").lstrip(),
             "datetime": datetime,
             "link": link,
+            "article_id": link,
             "content": content,
             "comments": comments
         }
