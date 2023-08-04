@@ -1,6 +1,6 @@
-from .fb import Facebook
+# from .fb import Facebook
 from .ptt import PTT
-from .dcard import Dcard
+# from .dcard import Dcard
 
 #
 #                       _oo0oo_
