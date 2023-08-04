@@ -63,17 +63,19 @@ class PTT:
 
     @staticmethod
     def get_article_content(soup: str) -> str:
-        re_content = r"(作者.{1,30}看板.{1,30}標題.{1,30}時間.{1,30}=?)[\s\S]+(?=※ 發信站:)"
-        raw_content = soup.find_all("div", attrs={"class": "bbs-screen bbs-content"})[0].text
-        matches = re.finditer(re_content, raw_content)
-        # print(matches)
-
-        for match in matches:
-
-            full_content = match.group(0)
-            meta_info = match.group(1)
         try:
+            re_content = r"(作者.{1,30}看板.{1,30}標題.{1,30}時間.{1,30}=?)[\s\S]+(?=※ 發信站:)"
+            raw_content = soup.find_all("div", attrs={"class": "bbs-screen bbs-content"})[0].text
+            matches = re.finditer(re_content, raw_content)
+            # print(matches)
+
+            for match in matches:
+
+                full_content = match.group(0)
+                meta_info = match.group(1)
+
             return full_content.replace(meta_info, "")
+        
         except:
             pass
     
@@ -97,8 +99,10 @@ class PTT:
     
 
     def get_article_info(self, link, soup: str) -> dict:
-
-        title = soup.find("meta", attrs={"property": "og:title"})['content']
+        try:
+            title = soup.find("meta", attrs={"property": "og:title"})['content']
+        except:
+            title = ""
         category = PTT.get_article_category(title)
         content  = PTT.get_article_content(soup)
         comments = PTT.get_article_comments(soup)
@@ -134,6 +138,13 @@ class PTT:
 
 
 if __name__ == "__main__":
-    ptt = PTT(board="Finance", crawler_pages=2)
-    for article in ptt.get():
+    import pandas as pd
+    from tqdm import tqdm
+
+    data = []
+    ptt = PTT(board="Bank_Service", crawler_pages=2, sleep=1)
+    for article in tqdm(ptt.get()):
+        data.append(article)
         print(article)
+    
+    # pd.DataFrame(data).to_excel("ptt_creditcard_2023_07_27.xlsx", index=False)
