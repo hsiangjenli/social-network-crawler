@@ -3,10 +3,21 @@ import re
 import time
 from bs4 import BeautifulSoup
 from datetime import datetime
+from typing import List, Union, Dict
+
+def EmptyConentHandler(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except:
+            return ""
+    return wrapper
+
 
 class PTT_BASE:
     home = "https://www.ptt.cc"
     board_and_page_url = "/bbs/{board}/index{page}.html"
+
 
 class PTT:
 
@@ -40,7 +51,7 @@ class PTT:
                 return int(page_number) + 1
 
 
-    def get_article_urls(self, soup: str) -> list:
+    def get_article_urls(self, soup: str) -> List[str]:
         article_urls = []
         for l in soup.find_all("div", attrs={"class": "title"}):
             if l.a:
@@ -49,7 +60,7 @@ class PTT:
         return article_urls
     
 
-    # Following methods are for getting the content of the article
+    # Following methods are for getting the content of the article ------------------------------
     @staticmethod
     def get_article_category(string) -> str:
         re_category = r"\[(.*?)\]"
@@ -60,24 +71,20 @@ class PTT:
         
         return ""
     
-
+    
     @staticmethod
+    @EmptyConentHandler
     def get_article_content(soup: str) -> str:
-        try:
-            re_content = r"(作者.{1,30}看板.{1,30}標題.{1,30}時間.{1,30}=?)[\s\S]+(?=※ 發信站:)"
-            raw_content = soup.find_all("div", attrs={"class": "bbs-screen bbs-content"})[0].text
-            matches = re.finditer(re_content, raw_content)
-            # print(matches)
+        re_content = r"(作者.{1,30}看板.{1,30}標題.{1,30}時間.{1,30}=?)[\s\S]+(?=※ 發信站:)"
+        raw_content = soup.find_all("div", attrs={"class": "bbs-screen bbs-content"})[0].text
+        matches = re.finditer(re_content, raw_content)
 
-            for match in matches:
+        for match in matches:
 
-                full_content = match.group(0)
-                meta_info = match.group(1)
+            full_content = match.group(0)
+            meta_info = match.group(1)
 
-            return full_content.replace(meta_info, "")
-        
-        except:
-            pass
+        return full_content.replace(meta_info, "")
     
 
     @staticmethod
@@ -90,19 +97,27 @@ class PTT:
 
     @staticmethod
     def get_article_datetime(soup: str) -> str:
+
+        @EmptyConentHandler
+        def find_datetime(dt):
+            return datetime.strptime(dt.text, "%a %b %d %H:%M:%S %Y")
+        
         datetime_candidates = soup.find_all("span", attrs={"class": "article-meta-value"})
+        
         for dt in datetime_candidates:
-            try:
-                return datetime.strptime(dt.text, "%a %b %d %H:%M:%S %Y")
-            except:
-                pass
+            if find_datetime(dt):
+                return find_datetime(dt)
     
+    
+    @staticmethod
+    @EmptyConentHandler
+    def get_article_title(soup: str) -> str:
+        return soup.find("meta", attrs={"property": "og:title"})['content']
+
 
     def get_article_info(self, link, soup: str) -> dict:
-        try:
-            title = soup.find("meta", attrs={"property": "og:title"})['content']
-        except:
-            title = ""
+        
+        title    = PTT.get_article_title(soup)
         category = PTT.get_article_category(title)
         content  = PTT.get_article_content(soup)
         comments = PTT.get_article_comments(soup)
@@ -141,10 +156,7 @@ if __name__ == "__main__":
     import pandas as pd
     from tqdm import tqdm
 
-    data = []
-    ptt = PTT(board="Bank_Service", crawler_pages=2, sleep=1)
-    for article in tqdm(ptt.get()):
-        data.append(article)
-        print(article)
+    ptt = PTT(board="Bank_Service", crawler_pages=10, sleep=0.5)
     
-    # pd.DataFrame(data).to_excel("ptt_creditcard_2023_07_27.xlsx", index=False)
+    for article in tqdm(ptt.get()):
+        print(article)
