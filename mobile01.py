@@ -28,9 +28,9 @@ def OnlyOnePageErrorHander(func):
 
 class Mobile01:
 
-    def __init__(self, board: str, page: int, sleep: float=0.5) -> None:
+    def __init__(self, board: str, crawler_pages: int, sleep: float=0.5) -> None:
         self.board = board
-        self.page = page
+        self.crawler_pages = crawler_pages
         self.sleep = sleep
 
     @staticmethod
@@ -59,7 +59,6 @@ class Mobile01:
     def get_article_datetime(soup: str) -> str:
         css_name = "o-fNotes o-fSubMini"
         dt = soup.find_all("span", attrs={"class": css_name})[0].text.replace("\n", "").strip()
-        # print(dt)
         return datetime.strptime(dt, "%Y-%m-%d %H:%M")
     
 
@@ -72,9 +71,7 @@ class Mobile01:
     def get_article_comments(soup: str) -> list:
         css_name = "u-gapBottom--max c-articleLimit"
         comments = []
-        
         for i in soup.find_all("article", attrs={"class": css_name}):
-            print(re.sub(r"\s+", "\n", i.text.strip().replace("\n", "")))
             comments.append(re.sub(r"\s+", "\n", i.text.strip().replace("\n", "")))
 
         return [line for comment in comments for line in comment.split("\n")]
@@ -91,44 +88,48 @@ class Mobile01:
     @OnlyOnePageErrorHander
     def get_article_last_page(soup: str) -> int:
         css_name = "l-pagination__page"
-        pages = soup.find_all("a", attrs={"class": css_name})
+        pages = soup.find_all("li", attrs={"class": css_name})
         last_page = int(pages[-1].text.replace(" ", "").replace("\n", ""))
         return last_page
     
     
-    async def main(self, page):
+    async def main(self, crawler_page):
         async with async_playwright() as playwright:
-            
+            results = []
             # 找出所有文章的連結 -------------------------------------------------------------------------------------- #
-            browser = await playwright.chromium.launch(headless=False)
+            browser = await playwright.firefox.launch(headless=True)
             page = await browser.new_page()
-            await page.goto(self.board_url(self.board, page), wait_until="domcontentloaded")
+            await page.goto(self.board_url(self.board, crawler_page), wait_until="domcontentloaded")
             soup = BeautifulSoup(await page.content(), "html.parser")
             article_urls = self.get_article_urls(soup)
+            print(article_urls)
+            # print(self.board_url(self.board, page))
             
             # 用迴圈進入每一篇文章 ------------------------------------------------------------------------------------- #
             for article_id in article_urls:
+
                 page = await browser.new_page()
                 await page.goto(Mobile01.article_url(article_id=article_id, page=1), wait_until="domcontentloaded")
                 soup = BeautifulSoup(await page.content(), "html.parser")
-                with open("test_3.html", "w", encoding="utf-8") as f:
-                    f.write(str(soup))
-                print(1)
+               
                 title = Mobile01.get_article_title(soup)
-                print(2)
                 datetime = Mobile01.get_article_datetime(soup)
-                print(3)
                 link = Mobile01.article_url(article_id=article_id, page=1)
                 content = Mobile01.get_article_content(soup)
                 many_pages_comments = []
+                many_pages_comments.extend(Mobile01.get_article_comments(soup))
+                await page.close()
+                print(article_id)
+
                 
                 # 每一篇文章都會有多頁的回覆，所以要用迴圈進入每一頁回覆 -------------------------------------------------------------------- #
                 for c_page in range(2, Mobile01.get_article_last_page(soup)+1):
+                    page = await browser.new_page()
                     await page.goto(Mobile01.article_url(article_id=article_id, page=c_page), wait_until="domcontentloaded")
                     soup = BeautifulSoup(await page.content(), "html.parser")
-                    print(soup)
                     single_page_comments = Mobile01.get_article_comments(soup)
                     many_pages_comments.extend(single_page_comments)
+                    await page.close()
 
                 article_contents = {
                     "title": title,
@@ -138,22 +139,21 @@ class Mobile01:
                     "content": content,
                     "comments": many_pages_comments,
                 }
-
-                yield article_contents
+                
+                results.append(article_contents) 
                 time.sleep(self.sleep)
 
-
             await browser.close()
+            return results
+            
 
-    async def get(self):
-        results = []
-        for i in range(1, self.page + 1):
-            async for content in self.main(page=i):
-                results.append(content)
-        return results
+    def get(self):
+        for page in range(1, self.crawler_pages + 1):
+            for content in asyncio.run(self.main(crawler_page=page)):
+                yield content
         
 
 if __name__ == "__main__":
-    m = Mobile01(board=801, page=1)
-    
-    asyncio.run(m.get())
+    m = Mobile01(board=801, crawler_pages=2)
+    for i in m.get():
+        print(i)
