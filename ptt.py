@@ -153,10 +153,7 @@ class PTT:
 
 
 if __name__ == "__main__":
-    import pandas as pd
     from tqdm import tqdm
-
     ptt = PTT(board="Bank_Service", crawler_pages=10, sleep=0.5)
-    
     for article in tqdm(ptt.get()):
         print(article)
