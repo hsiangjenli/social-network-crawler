@@ -139,9 +139,3 @@ if __name__ == "__main__":
         output.append(article)
     
     pd.DataFrame(output).to_excel(f"test.xlsx", index=False, columns=["id", "date", "url", "title", "content", "comments"])
-
-    # async def main():
-    #     async with async_playwright() as playwright:
-    #         await dcard.get(playwright)
-
-    # asyncio.run(main())
