@@ -80,7 +80,6 @@ class PTT:
         matches = re.finditer(re_content, raw_content)
 
         for match in matches:
-
             full_content = match.group(0)
             meta_info = match.group(1)
 
@@ -154,6 +153,7 @@ class PTT:
 
 if __name__ == "__main__":
     from tqdm import tqdm
+    
     ptt = PTT(board="Bank_Service", crawler_pages=10, sleep=0.5)
     for article in tqdm(ptt.get()):
         print(article)

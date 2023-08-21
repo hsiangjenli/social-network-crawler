@@ -49,7 +49,6 @@ class Mobile01:
         return f"https://www.mobile01.com/{article_id}&p={page}"
 
 
-    # get data --------------------------------------------------------------------------------------- #
     @staticmethod
     def get_article_title(soup: str) -> str:
         return soup.find_all("h1")[0].text.replace("\n", "").strip()
@@ -96,13 +95,14 @@ class Mobile01:
     async def main(self, crawler_page):
         async with async_playwright() as playwright:
             results = []
+            
             # 找出所有文章的連結 -------------------------------------------------------------------------------------- #
             browser = await playwright.firefox.launch(headless=True)
             page = await browser.new_page()
             await page.goto(self.board_url(self.board, crawler_page), wait_until="domcontentloaded")
             soup = BeautifulSoup(await page.content(), "html.parser")
             article_urls = self.get_article_urls(soup)
-            print(article_urls)
+            # print(article_urls)
             # print(self.board_url(self.board, page))
             
             # 用迴圈進入每一篇文章 ------------------------------------------------------------------------------------- #
@@ -119,7 +119,7 @@ class Mobile01:
                 many_pages_comments = []
                 many_pages_comments.extend(Mobile01.get_article_comments(soup))
                 await page.close()
-                print(article_id)
+                # print(article_id)
 
                 
                 # 每一篇文章都會有多頁的回覆，所以要用迴圈進入每一頁回覆 -------------------------------------------------------------------- #
@@ -154,6 +154,8 @@ class Mobile01:
         
 
 if __name__ == "__main__":
-    m = Mobile01(board=801, crawler_pages=2)
-    for i in m.get():
+    from tqdm import tqdm
+    
+    mobile01 = Mobile01(board=801, crawler_pages=1)
+    for i in tqdm(mobile01.get()):
         print(i)
