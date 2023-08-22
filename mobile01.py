@@ -33,6 +33,7 @@ class Mobile01:
         self.crawler_pages = crawler_pages
         self.sleep = sleep
 
+
     @staticmethod
     def board_url(board: str, page: int) -> str:
         """
