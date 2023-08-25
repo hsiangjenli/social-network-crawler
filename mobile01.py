@@ -5,17 +5,6 @@ from playwright.async_api import async_playwright
 import pandas as pd
 from datetime import datetime
 import time
-import json
-
-
-def CannotFindTextErrorHander(func):
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except:
-            return None
-    return wrapper
-
 
 def OnlyOnePageErrorHander(func):
     def wrapper(*args, **kwargs):
@@ -29,6 +18,22 @@ def OnlyOnePageErrorHander(func):
 class Mobile01:
 
     def __init__(self, board: str, crawler_pages: int, sleep: float=0.5) -> None:
+        """
+        Parameters
+        ----------
+        board : str
+            討論版代號，以「信用卡與消費」為例
+            - `801` 為「信用卡與消費」討論版的代號
+            - `p=1` 為第一頁
+            
+            ```python
+            https://www.mobile01.com/topiclist.php?f=801&p=1
+            ```
+        crawler_pages : int
+            總共要爬幾頁
+        sleep : float, optional
+            避免太過快速的對對方的網站請求，在每次爬完文章後的休息時間, by default 0.5
+        """
         self.board = board
         self.crawler_pages = crawler_pages
         self.sleep = sleep
@@ -50,13 +55,38 @@ class Mobile01:
         return f"https://www.mobile01.com/{article_id}&p={page}"
 
 
+    def get_article_urls(self, soup: str) -> str:
+        """
+        尋找爬蟲目標首頁的所有討論文章 URL
+        
+        Parameters
+        ----------
+        css_name : str
+            文章頁面的 css 名稱，用於定位
+        """
+        css_name = "c-listTableTd__title"
+        articles = soup.find_all("div", attrs={"class": css_name})
+        article_urls = [article.a['href'] for article in articles]
+        return article_urls
+    
+
     @staticmethod
     def get_article_title(soup: str) -> str:
+        """
+        尋找文章的 title
+        """
         return soup.find_all("h1")[0].text.replace("\n", "").strip()
     
 
     @staticmethod
     def get_article_datetime(soup: str) -> str:
+        """
+        尋找文章的發布日期
+        Parameters
+        ----------
+        css_name : str
+            文章頁面的 css 名稱，用於定位
+        """
         css_name = "o-fNotes o-fSubMini"
         dt = soup.find_all("span", attrs={"class": css_name})[0].text.replace("\n", "").strip()
         return datetime.strptime(dt, "%Y-%m-%d %H:%M")
@@ -64,11 +94,25 @@ class Mobile01:
 
     @staticmethod
     def get_article_content(soup: str) -> str:
+        """
+        尋找文章的內文
+        Parameters
+        ----------
+        itemprop : str
+            文章頁面的定位名稱
+        """
         return soup.find("div", attrs={"itemprop": "articleBody"}).text.replace("\n", "").strip()
     
 
     @staticmethod
     def get_article_comments(soup: str) -> list:
+        """
+        尋找文章的下方的回覆
+        Parameters
+        ----------
+        css_name : str
+            文章頁面的 css 名稱，用於定位
+        """
         css_name = "u-gapBottom--max c-articleLimit"
         comments = []
         for i in soup.find_all("article", attrs={"class": css_name}):
@@ -77,20 +121,13 @@ class Mobile01:
         return [line for comment in comments for line in comment.split("\n")]
 
 
-    def get_article_urls(self, soup: str) -> str:
-        css_name = "c-listTableTd__title"
-        articles = soup.find_all("div", attrs={"class": css_name})
-        article_urls = [article.a['href'] for article in articles]
-        return article_urls
-    
-
     @staticmethod
     @OnlyOnePageErrorHander
     def get_article_last_page(soup: str) -> int:
         css_name = "l-pagination__page"
         pages = soup.find_all("li", attrs={"class": css_name})
         last_page = int(pages[-1].text.replace(" ", "").replace("\n", ""))
-        return last_page
+        return last_page    
     
     
     async def main(self, crawler_page):
