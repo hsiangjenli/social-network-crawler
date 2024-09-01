@@ -2,11 +2,8 @@ import asyncio
 import re
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
-import pandas as pd
 from datetime import datetime
 import time
-import json
-
 
 def CannotFindTextErrorHander(func):
     def wrapper(*args, **kwargs):
