@@ -11,7 +11,7 @@ How to install
 
 .. code-block:: bash
 
-   pip install https://github.com/hsiangjenli/social-network-crawler.git
+   pip install git+https://github.com/hsiangjenli/social-network-crawler.git
 
 
 .. autocontent::
