@@ -9,9 +9,13 @@ Welcome to social-network-crawler's documentation!
 How to install
 --------------
 
+#. Install the package via pip
+#. Install the required browsers via playwright
+
 .. code-block:: bash
 
    pip install git+https://github.com/hsiangjenli/social-network-crawler.git
+   playwright install # optional, if you want to use playwright
 
 
 .. autocontent::
@@ -19,4 +23,10 @@ How to install
 PTT
 ---
 .. autoclass:: SNC.PTT
+   :members:
+
+
+Mobile01
+--------
+.. autoclass:: SNC.Mobile01
    :members:

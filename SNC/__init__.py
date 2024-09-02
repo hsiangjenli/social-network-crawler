@@ -5,6 +5,7 @@ This is the SNC module initialization file.
 __version__ = "0.1.0"
 
 from .ptt import PTT
+from .mobile01 import Mobile01
 
 #
 #                       _oo0oo_

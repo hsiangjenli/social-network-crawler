@@ -24,8 +24,15 @@ def OnlyOnePageErrorHander(func):
 
 
 class Mobile01:
+    """_summary_
 
+    Args:
+        board (str): _description_
+        crawler_pages (int): _description_
+        sleep (float, optional): _description_. Defaults to 0.5.
+    """
     def __init__(self, board: str, crawler_pages: int, sleep: float=0.5) -> None:
+
         self.board = board
         self.crawler_pages = crawler_pages
         self.sleep = sleep
@@ -48,11 +55,13 @@ class Mobile01:
 
     # get data --------------------------------------------------------------------------------------- #
     @staticmethod
+    @CannotFindTextErrorHander
     def get_article_title(soup: str) -> str:
         return soup.find_all("h1")[0].text.replace("\n", "").strip()
     
 
     @staticmethod
+    @CannotFindTextErrorHander
     def get_article_datetime(soup: str) -> str:
         css_name = "o-fNotes o-fSubMini"
         dt = soup.find_all("span", attrs={"class": css_name})[0].text.replace("\n", "").strip()
@@ -60,11 +69,13 @@ class Mobile01:
     
 
     @staticmethod
+    @CannotFindTextErrorHander
     def get_article_content(soup: str) -> str:
         return soup.find("div", attrs={"itemprop": "articleBody"}).text.replace("\n", "").strip()
     
 
     @staticmethod
+    @CannotFindTextErrorHander
     def get_article_comments(soup: str) -> list:
         css_name = "u-gapBottom--max c-articleLimit"
         comments = []
@@ -99,11 +110,11 @@ class Mobile01:
             await page.goto(self.board_url(self.board, crawler_page), wait_until="domcontentloaded")
             soup = BeautifulSoup(await page.content(), "html.parser")
             article_urls = self.get_article_urls(soup)
-            print(article_urls)
-            # print(self.board_url(self.board, page))
             
             # 用迴圈進入每一篇文章 ------------------------------------------------------------------------------------- #
             for article_id in article_urls:
+
+                print(f"Crawling {Mobile01.article_url(article_id=article_id, page=1)}")
 
                 page = await browser.new_page()
                 await page.goto(Mobile01.article_url(article_id=article_id, page=1), wait_until="domcontentloaded")
@@ -116,8 +127,6 @@ class Mobile01:
                 many_pages_comments = []
                 many_pages_comments.extend(Mobile01.get_article_comments(soup))
                 await page.close()
-                print(article_id)
-
                 
                 # 每一篇文章都會有多頁的回覆，所以要用迴圈進入每一頁回覆 -------------------------------------------------------------------- #
                 for c_page in range(2, Mobile01.get_article_last_page(soup)+1):
