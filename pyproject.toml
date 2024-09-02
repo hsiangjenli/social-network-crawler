@@ -6,7 +6,7 @@ build-backend = "flit_core.buildapi"
 name = "SNC"
 authors = [{name = "Hsiang-Jen Li", email = "hsiangjenli@gmail.com"}]
 dynamic = ["version", "description"]
-dependencies = ["requests", "beautifulsoup4"]
+dependencies = ["requests", "beautifulsoup4", "pytest-playwright"]
 
 [project.urls]
 Home = "http://hsiangjenli.github.io/social-network-crawler"
