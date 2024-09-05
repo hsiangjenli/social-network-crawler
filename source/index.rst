@@ -17,8 +17,11 @@ How to install
    pip install git+https://github.com/hsiangjenli/social-network-crawler.git
    playwright install # optional, if you want to use playwright
 
-
-.. autocontent::
+Discussion Model
+----------------
+.. autopydantic_model:: SNC.base.Discussion
+   :model-erdantic-figure: True
+   :model-erdantic-figure-collapsed: False
 
 PTT
 ---
