@@ -17,6 +17,9 @@ release = '0.1'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
+    'sphinxcontrib.autodoc_pydantic',
+    'sphinx.ext.graphviz',
+
 ]
 
 templates_path = ['_templates']
@@ -29,3 +32,6 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 napoleon_numpy_docstring = True  # 支持 NumPy 風格的 docstring
+
+autodoc_pydantic_model_show_json = True
+autodoc_pydantic_settings_show_json = False
