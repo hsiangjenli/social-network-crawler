@@ -23,7 +23,13 @@ class Discussion(BaseModel):
             raise ValueError("Comment cannot be empty")
         return v
 
-
+class News(BaseModel):
+    title: str
+    datetime: datetime
+    link: HttpUrl
+    news_id: str
+    content: str
+    
 if __name__ == '__main__':
 
     # Correct Input Data
