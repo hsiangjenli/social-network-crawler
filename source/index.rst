@@ -17,19 +17,17 @@ How to install
    pip install git+https://github.com/hsiangjenli/social-network-crawler.git
    playwright install # optional, if you want to use playwright
 
-Discussion Model
-----------------
-.. autopydantic_model:: SNC.base.Discussion
-   :model-erdantic-figure: True
-   :model-erdantic-figure-collapsed: False
 
-PTT
----
-.. autoclass:: SNC.PTT
-   :members:
+.. toctree::
+   :glob:
+   :caption: Base Model
+   :maxdepth: 1
 
+   base_model
 
-Mobile01
---------
-.. autoclass:: SNC.Mobile01
-   :members:
+.. toctree::
+   :glob:
+   :caption: Crawler
+   :maxdepth: 1
+
+   crawler
