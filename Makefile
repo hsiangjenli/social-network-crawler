@@ -23,4 +23,4 @@ docker_image:
 	docker build -t hsiangjenli/sphinx-doc:social-network-crawler .
 
 run:
-	docker run --rm --volume "$(PWD):/workspace" -itd hsiangjenli/sphinx-doc:social-network-crawler bash -c "pip install . && playwright install && make html"
+	docker run --rm --volume "$(PWD):/workspace" -itd hsiangjenli/snc:latest bash
